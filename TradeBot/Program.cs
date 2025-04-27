@@ -73,13 +73,13 @@ public class Program
     public int GetUserById(long ChatId)
     {
         var user = _context.Users.FirstOrDefault(x => x.ChatId == ChatId);
+        if (user == null)
+        {
+            return 1;
+        }
         if (user?.PhoneNumber != null)
         {
             return 0;
-        }
-        if(user == null)
-        {
-            return 1;
         }
         return 2;
     }
@@ -103,8 +103,43 @@ public class Program
         //Log.Information(_token);
         var symbols = new List<string>
         {
-        "BTC-USDT", "ETH-USDT", "BNB-USDT", "XRP-USDT", "ADA-USDT",
-        "SOL-USDT", "DOGE-USDT", "DOT-USDT", "TRX-USDT","TON-USDT","NOT-USDT","SHIB-USDT","LTC-USDT","LINK-USDT","OP-USDT"
+            "BTC-USDT", "ETH-USDT", "BNB-USDT", "XRP-USDT", "ADA-USDT",
+            "SOL-USDT", "DOGE-USDT", "DOT-USDT", "TRX-USDT", "TON-USDT",
+            "NOT-USDT", "SHIB-USDT", "LTC-USDT", "LINK-USDT", "OP-USDT",
+            "AVAX-USDT", "PEPE-USDT", "WIF-USDT", "NEAR-USDT",
+            "ICP-USDT", "ETC-USDT", "FIL-USDT", "HBAR-USDT", "STX-USDT",
+            "SUI-USDT", "APT-USDT", "TAO-USDT", "LDO-USDT",
+            "ARB-USDT", "VET-USDT", "IMX-USDT", "INJ-USDT", "MKR-USDT",
+            "THETA-USDT", "FLOW-USDT", "GRT-USDT", "AXS-USDT", "BCH-USDT",
+            "AAVE-USDT", "KAS-USDT", "EGLD-USDT", "ORDI-USDT",
+            "XTZ-USDT", "RUNE-USDT", "CHZ-USDT", "SAND-USDT", "MANA-USDT",
+            "CRV-USDT", "XLM-USDT", "CFX-USDT", "ZIL-USDT", "SNX-USDT",
+            "DASH-USDT", "ENJ-USDT", "CAKE-USDT", "CELO-USDT", "DYDX-USDT",
+            "ONE-USDT", "ROSE-USDT", "YFI-USDT", "KAVA-USDT",
+            "ICX-USDT", "ONT-USDT", "QTUM-USDT", "ZRX-USDT", "BAT-USDT",
+            "IOST-USDT", "RVN-USDT", "NKN-USDT",
+            "AR-USDT", "LRC-USDT", "BLUR-USDT", "FLR-USDT", "COMP-USDT",
+            "BAND-USDT", "CKB-USDT", "SFP-USDT", "ANKR-USDT", "OMG-USDT",
+            "DGB-USDT", "LPT-USDT", "ALPHA-USDT",
+            "CVC-USDT", "STORJ-USDT", "FET-USDT", "ZEN-USDT",
+            "KNC-USDT", "CHR-USDT", "ASTR-USDT", "RLC-USDT",
+            "MINA-USDT", "WOO-USDT", "TWT-USDT", "SXP-USDT",
+            "PENDLE-USDT", "ID-USDT", "DYM-USDT", "PYTH-USDT", "STRK-USDT",
+            "NTRN-USDT", "JUP-USDT", "COTI-USDT",
+            "XAI-USDT", "ARKM-USDT", "PIXEL-USDT", "XNO-USDT", "DFI-USDT",
+            "NYM-USDT", "AUDIO-USDT", "VRA-USDT", "SYN-USDT",
+            "TRB-USDT", "UMA-USDT", "HFT-USDT", "RDNT-USDT",
+            "SSV-USDT", "WLD-USDT", "MAV-USDT",
+            "T-USDT", "POND-USDT", "DODO-USDT",
+            "BICO-USDT", "HIGH-USDT", "CTSI-USDT",
+            "UOS-USDT", "KMD-USDT", "NMR-USDT", "YGG-USDT",
+            "MASK-USDT", "FLOKI-USDT", "PERP-USDT", "OGN-USDT",
+            "DENT-USDT", "ERG-USDT", "MTL-USDT", "OXT-USDT",
+            "SYS-USDT", "XYM-USDT", "VTHO-USDT", "FXS-USDT",
+            "SUSHI-USDT", "REQ-USDT", "SUPER-USDT",
+            "GMT-USDT", "DEGO-USDT", "FORTH-USDT",
+            "POLS-USDT", "XPRT-USDT",
+            "RAY-USDT", "ALICE-USDT", "C98-USDT"
         };
 
         var analyzer = new MarketAnalyzer();
@@ -144,7 +179,11 @@ public class Program
 
 
             var pc = new PersianCalendar();
-            foreach (var signal in strongSignals.Take(4))
+            var sortedSignals = strongSignals
+             .OrderByDescending(signal => ExtractScoreFromReason(signal.Reason))
+             .Take(4);
+
+            foreach (var signal in sortedSignals)
             {
                 var dt = signal.Time;
                 string persianTime = $"{pc.GetHour(dt):00}:{pc.GetMinute(dt):00} - {pc.GetYear(dt)}/{pc.GetMonth(dt):00}/{pc.GetDayOfMonth(dt):00}";
@@ -162,16 +201,26 @@ public class Program
                 await telegram.SendSignalMessage(msg);
             }
 
+           
 
-            Log.Information(" Next Analys 10  minute later...");
-            await Task.Delay(TimeSpan.FromMinutes(10)); 
+
+            Log.Information(" Next Analys 1 hour later...");
+            await Task.Delay(TimeSpan.FromMinutes(60)); 
 
         }
 
     }
 
 
-    
+    // تابع برای درآوردن نمره از متن Reason
+    private static decimal ExtractScoreFromReason(string reason)
+    {
+        var match = Regex.Match(reason, @"(\d+(\.\d+)?)");
+        if (match.Success && decimal.TryParse(match.Value, out var score))
+            return score;
+
+        return 0;
+    }
 
 }
 
@@ -393,7 +442,7 @@ public class TelegramSender
                     );
 
             }
-            else
+            else if(isExistPhoneNumber == 1)
             {
                 await bot.SendTextMessageAsync(
                     chatId,
@@ -601,8 +650,9 @@ public static class IndicatorCalculator
 
 public class SignalGenerator
 {
-    public  TradeSignal GenerateSignal(string symbol, List<Candle> candles1h, List<Candle> candles4h,
-                                   decimal slPercent = 1.5m, decimal tpPercent = 3.0m)
+    public TradeSignal GenerateSignal(string symbol, List<Candle> candles1h, List<Candle> candles4h,
+                                   decimal slPercentBuy = 1.5m, decimal tpPercentBuy = 3.0m,
+                                   decimal slPercentSell = 1.5m, decimal tpPercentSell = 3.0m)
     {
         var ema20 = IndicatorCalculator.EMA(candles1h, 20);
         var ema50 = IndicatorCalculator.EMA(candles1h, 50);
@@ -612,27 +662,60 @@ public class SignalGenerator
         bool trendUp = TrendConfirmationAnalyzer.IsUptrend(candles4h);
         bool trendDown = TrendConfirmationAnalyzer.IsDowntrend(candles4h);
 
+        decimal buyScore = 0;
+        decimal sellScore = 0;
+
+        // تحلیل برای خرید
+        if (CheckMacdCrossover(macd, signal))
+            buyScore += 0.3m;
+
+        if (CheckVolumeSpike(candles1h))
+            buyScore += 0.2m;
+
+        if (CheckEmaCrossover(ema20, ema50))
+            buyScore += 0.2m;
+
+        if (trendUp)
+            buyScore += 0.2m;
+
+        if (rsi[^1] > 50 && rsi[^1] < 70)
+            buyScore += 0.1m;
+
+        // تحلیل برای فروش
+        if (CheckMacdCrossunder(macd, signal))
+            sellScore += 0.3m;
+
+        if (CheckVolumeSpike(candles1h))
+            sellScore += 0.2m;
+
+        if (CheckEmaCrossunder(ema20, ema50))
+            sellScore += 0.2m;
+
+        if (trendDown)
+            sellScore += 0.2m;
+
+        if (rsi[^1] < 50 && rsi[^1] > 30)
+            sellScore += 0.1m;
+
         string action = "Hold";
-        string reason = "سیگنال تأیید نشده یا روند مشخص نیست.";
+        string reason = "نمره کافی برای خرید یا فروش صادر نشد.";
         decimal stopLoss = 0, takeProfit = 0;
         decimal entry = candles1h[^1].Close;
-
-        bool isBuy = CheckBuySignal(candles1h, ema20, ema50, rsi, macd, signal) && trendUp;
-        bool isSell = CheckSellSignal(candles1h, ema20, ema50, rsi, macd, signal) && trendDown;
-
-        if (isBuy)
+        Log.Information($"The Buying Rate Of {symbol} is : {buyScore}");
+        Log.Information($"The Selling Rate Of {symbol} is : {sellScore}");
+        if (buyScore >= 0.4m && buyScore >= sellScore)
         {
             action = "Buy";
-            reason = "تأیید روند صعودی در تایم‌فریم ۴H + سیگنال خرید در ۱H";
-            stopLoss = entry - (entry * slPercent / 100);
-            takeProfit = entry + (entry * tpPercent / 100);
+            reason = $"امتیاز تحلیل خرید {buyScore:F2} (بیش از 0.8) - سیگنال خرید صادر شد.";
+            stopLoss = entry - (entry * slPercentBuy / 100);
+            takeProfit = entry + (entry * tpPercentBuy / 100);
         }
-        else if (isSell)
+        else if (sellScore >= 0.4m && sellScore > buyScore)
         {
             action = "Sell";
-            reason = "تأیید روند نزولی در تایم‌فریم ۴H + سیگنال فروش در ۱H";
-            stopLoss = entry + (entry * slPercent / 100);
-            takeProfit = entry - (entry * tpPercent / 100);
+            reason = $"امتیاز تحلیل فروش {sellScore:F2} (بیش از 0.8) - سیگنال فروش صادر شد.";
+            stopLoss = entry + (entry * slPercentSell / 100);
+            takeProfit = entry - (entry * tpPercentSell / 100);
         }
 
         return new TradeSignal
@@ -646,6 +729,36 @@ public class SignalGenerator
             TakeProfit = takeProfit
         };
     }
+
+   
+    private bool CheckMacdCrossover(List<decimal> macd, List<decimal> signal)
+    {
+        return macd[^2] < signal[^2] && macd[^1] > signal[^1];
+    }
+
+    private bool CheckMacdCrossunder(List<decimal> macd, List<decimal> signal)
+    {
+        return macd[^2] > signal[^2] && macd[^1] < signal[^1];
+    }
+
+    private bool CheckEmaCrossover(List<decimal> emaFast, List<decimal> emaSlow)
+    {
+        return emaFast[^2] < emaSlow[^2] && emaFast[^1] > emaSlow[^1];
+    }
+
+    private bool CheckEmaCrossunder(List<decimal> emaFast, List<decimal> emaSlow)
+    {
+        return emaFast[^2] > emaSlow[^2] && emaFast[^1] < emaSlow[^1];
+    }
+
+    private bool CheckVolumeSpike(List<Candle> candles)
+    {
+        if (candles.Count < 2) return false;
+        var avgVolume = candles.Take(candles.Count - 1).Select(c => c.Volume).Average();
+        return candles[^1].Volume > avgVolume * 1.5m;
+    }
+
+
 
     public static class DivergenceDetector
     {
