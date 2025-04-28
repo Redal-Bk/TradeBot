@@ -17,6 +17,7 @@ public partial class SlySignalContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<Tokens> Token { get; set; }
+    public virtual DbSet<Coins> Coins { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("server=.;database=SlySignal;TrustServerCertificate=True;Trusted_Connection=True;");
 
@@ -37,6 +38,11 @@ public partial class SlySignalContext : DbContext
         modelBuilder.Entity<Tokens>(entity => {
             entity.Property(e => e.Token).HasMaxLength(500); 
             
+        });
+        modelBuilder.Entity<Coins>(entity =>
+        {
+            //entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);

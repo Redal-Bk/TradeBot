@@ -83,6 +83,12 @@ public class Program
         }
         return 2;
     }
+    public List<string?> GetCoinList()
+    {
+        var coin = _context.Coins.Select(x => x.Title).ToList();
+        return coin;
+
+    }
     static async Task Main(string[] args)
     {
 
@@ -98,57 +104,27 @@ public class Program
         System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
        
-        
+
+
+
         var _token = await program.GetToken();
         //Log.Information(_token);
-        var symbols = new List<string>
-        {
-            "BTC-USDT", "ETH-USDT", "BNB-USDT", "XRP-USDT", "ADA-USDT",
-            "SOL-USDT", "DOGE-USDT", "DOT-USDT", "TRX-USDT", "TON-USDT",
-            "NOT-USDT", "SHIB-USDT", "LTC-USDT", "LINK-USDT", "OP-USDT",
-            "AVAX-USDT", "PEPE-USDT", "WIF-USDT", "NEAR-USDT",
-            "ICP-USDT", "ETC-USDT", "FIL-USDT", "HBAR-USDT", "STX-USDT",
-            "SUI-USDT", "APT-USDT", "TAO-USDT", "LDO-USDT",
-            "ARB-USDT", "VET-USDT", "IMX-USDT", "INJ-USDT", "MKR-USDT",
-            "THETA-USDT", "FLOW-USDT", "GRT-USDT", "AXS-USDT", "BCH-USDT",
-            "AAVE-USDT", "KAS-USDT", "EGLD-USDT", "ORDI-USDT",
-            "XTZ-USDT", "RUNE-USDT", "CHZ-USDT", "SAND-USDT", "MANA-USDT",
-            "CRV-USDT", "XLM-USDT", "CFX-USDT", "ZIL-USDT", "SNX-USDT",
-            "DASH-USDT", "ENJ-USDT", "CAKE-USDT", "CELO-USDT", "DYDX-USDT",
-            "ONE-USDT", "ROSE-USDT", "YFI-USDT", "KAVA-USDT",
-            "ICX-USDT", "ONT-USDT", "QTUM-USDT", "ZRX-USDT", "BAT-USDT",
-            "IOST-USDT", "RVN-USDT", "NKN-USDT",
-            "AR-USDT", "LRC-USDT", "BLUR-USDT", "FLR-USDT", "COMP-USDT",
-            "BAND-USDT", "CKB-USDT", "SFP-USDT", "ANKR-USDT", "OMG-USDT",
-            "DGB-USDT", "LPT-USDT", "ALPHA-USDT",
-            "CVC-USDT", "STORJ-USDT", "FET-USDT", "ZEN-USDT",
-            "KNC-USDT", "CHR-USDT", "ASTR-USDT", "RLC-USDT",
-            "MINA-USDT", "WOO-USDT", "TWT-USDT", "SXP-USDT",
-            "PENDLE-USDT", "ID-USDT", "DYM-USDT", "PYTH-USDT", "STRK-USDT",
-            "NTRN-USDT", "JUP-USDT", "COTI-USDT",
-            "XAI-USDT", "ARKM-USDT", "PIXEL-USDT", "XNO-USDT", "DFI-USDT",
-            "NYM-USDT", "AUDIO-USDT", "VRA-USDT", "SYN-USDT",
-            "TRB-USDT", "UMA-USDT", "HFT-USDT", "RDNT-USDT",
-            "SSV-USDT", "WLD-USDT", "MAV-USDT",
-            "T-USDT", "POND-USDT", "DODO-USDT",
-            "BICO-USDT", "HIGH-USDT", "CTSI-USDT",
-            "UOS-USDT", "KMD-USDT", "NMR-USDT", "YGG-USDT",
-            "MASK-USDT", "FLOKI-USDT", "PERP-USDT", "OGN-USDT",
-            "DENT-USDT", "ERG-USDT", "MTL-USDT", "OXT-USDT",
-            "SYS-USDT", "XYM-USDT", "VTHO-USDT", "FXS-USDT",
-            "SUSHI-USDT", "REQ-USDT", "SUPER-USDT",
-            "GMT-USDT", "DEGO-USDT", "FORTH-USDT",
-            "POLS-USDT", "XPRT-USDT",
-            "RAY-USDT", "ALICE-USDT", "C98-USDT"
-        };
-
+        var symbols = program.GetCoinList();
+       
+       
+        //await Console.Out.WriteLineAsync();
         var analyzer = new MarketAnalyzer();
         var signalGenerator = new SignalGenerator();
         var AccessIds = program.PremiumAccess();
-        var telegram = new TelegramSender(
-            _token,
-           AccessIds
-        );
+        var telegram = new TelegramSender(_token, AccessIds);
+
+        // اجرای بک‌تست قبل از شروع ربات
+       // var backtester = new Backtester();
+        //await backtester.RunBacktestAsync(symbols, months: 1);
+
+        // ارسال خلاصه نتایج بک‌تست در تلگرام
+        //await telegram.SendSignalMessage("✅ بک‌تست انجام شد. لطفاً نتایج را در لاگ بررسی کنید.");
+
         await telegram.StartListening();
 
         Log.Information(" The Bot Has Been Started");
@@ -162,9 +138,8 @@ public class Program
                 {
                     var candles1h = await analyzer.GetCandlesAsync(symbol);
                     var candles4h = await analyzer.Get4hCandlesAsync(symbol);
-                    var signal = signalGenerator.GenerateSignal(symbol, candles1h,candles4h);
+                    var signal = signalGenerator.GenerateSignal(symbol, candles1h, candles4h);
 
-                    
                     if (signal.Action != "Hold")
                     {
                         strongSignals.Add(signal);
@@ -177,36 +152,40 @@ public class Program
                 }
             }
 
-
             var pc = new PersianCalendar();
             var sortedSignals = strongSignals
-             .OrderByDescending(signal => ExtractScoreFromReason(signal.Reason))
-             .Take(4);
+                .OrderByDescending(signal => ExtractScoreFromReason(signal.Reason))
+                .Take(4);
 
             foreach (var signal in sortedSignals)
             {
                 var dt = signal.Time;
                 string persianTime = $"{pc.GetHour(dt):00}:{pc.GetMinute(dt):00} - {pc.GetYear(dt)}/{pc.GetMonth(dt):00}/{pc.GetDayOfMonth(dt):00}";
 
-                string msg = $"\uD83D\uDCCA سیگنال جدید:\n" +
+                string msg = $"📊 سیگنال جدید:\n" +
                              $"📌 رمز ارز: {signal.Symbol}\n" +
                              $"⏱ زمان: {persianTime}\n" +
                              $"💵 قیمت ورود: {signal.Price}\n" +
-                             $"🎯 حد سود (TP): {signal.TakeProfit}\n" +
+                             $"🎯 حد سود (TP1): {signal.TakeProfit1}\n" +
+                             $"🎯 حد سود (TP2): {signal.TakeProfit2}\n" +
+                             $"🎯 حد سود (TP3): {signal.TakeProfit3}\n" +
                              $"🛡 حد ضرر (SL): {signal.StopLoss}\n" +
                              $"📈 وضعیت: {signal.Action}\n" +
-                             $"📝 دلیل: {signal.Reason}";
+                             $"⚡ اهرم پیشنهادی: 10x\n" +
+                             $"📝 دلیل: {signal.Reason}\n\n" +
+                             $"📚 نکات مدیریت ریسک:\n" +
+                             $"➖ لطفاً حتماً با رعایت مدیریت سرمایه وارد معامله شوید.\n" +
+                             $"➖ با رسیدن قیمت به حد سود اول، بخشی از سود خود را سیو کرده و استاپ لاس را به نقطه ورود منتقل کنید (اصطلاحاً بی‌ضرر کنید).\n" +
+                             $"➖ در صورت ادامه روند، استاپ لاس را به صورت پله‌ای همراه با قیمت جابجا کنید تا سود بیشتری حفظ شود.\n" +
+                             $"➖ از ورود با حجم بالا و بدون برنامه مدیریت سرمایه خودداری کنید.";
+
 
                 await Console.Out.WriteLineAsync("📡 سیگنال جدید ارسال شد: => " + msg);
                 await telegram.SendSignalMessage(msg);
             }
 
-           
-
-
-            Log.Information(" Next Analys 1 hour later...");
-            await Task.Delay(TimeSpan.FromMinutes(60)); 
-
+            Log.Information(" Next Analys 4 hour later...");
+            await Task.Delay(TimeSpan.FromHours(4));
         }
 
     }
@@ -474,9 +453,9 @@ public class MarketAnalyzer
 {
     private readonly HttpClient _client = new HttpClient();
 
-    public async Task<List<Candle>> GetCandlesAsync(string symbol)
+    public async Task<List<Candle>> GetCandlesAsync(string symbol, DateTime? fromDate = null)
     {
-        var url = $"https://api.kucoin.com/api/v1/market/candles?symbol={symbol}&type=1hour&limit=100";
+        var url = $"https://api.kucoin.com/api/v1/market/candles?symbol={symbol}&type=4hour&limit=1000";
         var response = await _client.GetStringAsync(url);
         var json = JsonSerializer.Deserialize<JsonElement>(response);
 
@@ -491,11 +470,11 @@ public class MarketAnalyzer
         foreach (var item in rawData)
         {
             var candleArray = item.EnumerateArray().ToArray();
-            if (candleArray.Length < 6) continue; 
+            if (candleArray.Length < 6) continue;
 
             candles.Add(new Candle
             {
-                Time = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(candleArray[0].GetString()) * 1000).DateTime,
+                Time = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(candleArray[0].GetString()) * 1000).UtcDateTime,
                 Open = Convert.ToDecimal(candleArray[1].GetString()),
                 Close = Convert.ToDecimal(candleArray[2].GetString()),
                 High = Convert.ToDecimal(candleArray[3].GetString()),
@@ -504,13 +483,21 @@ public class MarketAnalyzer
             });
         }
 
-        candles.Reverse(); 
+        candles.Reverse();
+
+        // ✅ فیلتر بر اساس fromDate اگر داده شده بود
+        if (fromDate.HasValue)
+        {
+            candles = candles.Where(c => c.Time >= fromDate.Value).ToList();
+        }
+
         return candles;
     }
 
+
     public async Task<List<Candle>> Get4hCandlesAsync(string symbol)
     {
-        var url = $"https://api.kucoin.com/api/v1/market/candles?symbol={symbol}&type=4hour&limit=100";
+        var url = $"https://api.kucoin.com/api/v1/market/candles?symbol={symbol}&type=4hour&limit=1000";
         var response = await _client.GetStringAsync(url);
         var json = JsonSerializer.Deserialize<JsonElement>(response);
 
@@ -644,20 +631,106 @@ public static class IndicatorCalculator
 
         return (macd.Skip(macd.Count - signalLine.Count).ToList(), signalLine);
     }
+    public static List<decimal> ADX(List<Candle> candles, int period = 14)
+    {
+        var plusDM = new List<decimal>();
+        var minusDM = new List<decimal>();
+        var tr = new List<decimal>();
+        var dx = new List<decimal>();
+        var adx = new List<decimal>();
+
+        for (int i = 1; i < candles.Count; i++)
+        {
+            decimal highDiff = candles[i].High - candles[i - 1].High;
+            decimal lowDiff = candles[i - 1].Low - candles[i].Low;
+
+            plusDM.Add(highDiff > lowDiff && highDiff > 0 ? highDiff : 0);
+            minusDM.Add(lowDiff > highDiff && lowDiff > 0 ? lowDiff : 0);
+
+            decimal trueRange = Math.Max(candles[i].High - candles[i].Low, Math.Max(
+                Math.Abs(candles[i].High - candles[i - 1].Close),
+                Math.Abs(candles[i].Low - candles[i - 1].Close)
+            ));
+            tr.Add(trueRange);
+        }
+
+        List<decimal> smoothedTR = Smooth(tr, period);
+        List<decimal> smoothedPlusDM = Smooth(plusDM, period);
+        List<decimal> smoothedMinusDM = Smooth(minusDM, period);
+
+        for (int i = 0; i < smoothedTR.Count; i++)
+        {
+            decimal plusDI = smoothedTR[i] == 0 ? 0 : (smoothedPlusDM[i] / smoothedTR[i]) * 100;
+            decimal minusDI = smoothedTR[i] == 0 ? 0 : (smoothedMinusDM[i] / smoothedTR[i]) * 100;
+
+            decimal diDiff = Math.Abs(plusDI - minusDI);
+            decimal diSum = plusDI + minusDI;
+
+            decimal dxValue = diSum == 0 ? 0 : (diDiff / diSum) * 100;
+            dx.Add(dxValue);
+        }
+
+        adx = Smooth(dx, period);
+        return adx;
+    }
+
+    private static List<decimal> Smooth(List<decimal> values, int period)
+    {
+        var smoothed = new List<decimal>();
+        decimal sum = 0;
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            if (i < period)
+            {
+                sum += values[i];
+                if (i == period - 1)
+                    smoothed.Add(sum / period);
+            }
+            else
+            {
+                decimal prev = smoothed.Last();
+                decimal current = ((prev * (period - 1)) + values[i]) / period;
+                smoothed.Add(current);
+            }
+        }
+
+        return smoothed;
+    }
+
 }
 
 
 
 public class SignalGenerator
 {
+
     public TradeSignal GenerateSignal(string symbol, List<Candle> candles1h, List<Candle> candles4h,
-                                   decimal slPercentBuy = 1.5m, decimal tpPercentBuy = 3.0m,
-                                   decimal slPercentSell = 1.5m, decimal tpPercentSell = 3.0m)
+    decimal slPercentBuy = 1.5m, decimal tpPercentBuy = 3.0m,
+    decimal slPercentSell = 1.5m, decimal tpPercentSell = 3.0m)
     {
+        bool isTrending = TrendConfirmationAnalyzer.IsTrendingMarket(candles1h);
+
+        if (!isTrending)
+        {
+            return new TradeSignal
+            {
+                Symbol = symbol,
+                Time = candles1h[^1].Time,
+                Action = "Hold",
+                Reason = "فاز بازار رنج است - سیگنال صادر نشد.",
+                Price = candles1h[^1].Close,
+                StopLoss = 0,
+                TakeProfit1 = 0,
+                TakeProfit2 = 0,
+                TakeProfit3 = 0
+            };
+        }
+
         var ema20 = IndicatorCalculator.EMA(candles1h, 20);
         var ema50 = IndicatorCalculator.EMA(candles1h, 50);
         var rsi = IndicatorCalculator.RSI(candles1h, 14);
-        var (macd, signal) = IndicatorCalculator.MACD(candles1h, 12, 26, 9);
+        var (macd, signalLine) = IndicatorCalculator.MACD(candles1h, 12, 26, 9);
 
         bool trendUp = TrendConfirmationAnalyzer.IsUptrend(candles4h);
         bool trendDown = TrendConfirmationAnalyzer.IsDowntrend(candles4h);
@@ -665,57 +738,63 @@ public class SignalGenerator
         decimal buyScore = 0;
         decimal sellScore = 0;
 
-        // تحلیل برای خرید
-        if (CheckMacdCrossover(macd, signal))
+        // امتیازدهی به خرید
+        if (CheckMacdCrossover(macd, signalLine))
             buyScore += 0.3m;
-
         if (CheckVolumeSpike(candles1h))
             buyScore += 0.2m;
-
         if (CheckEmaCrossover(ema20, ema50))
             buyScore += 0.2m;
-
         if (trendUp)
             buyScore += 0.2m;
-
         if (rsi[^1] > 50 && rsi[^1] < 70)
             buyScore += 0.1m;
 
-        // تحلیل برای فروش
-        if (CheckMacdCrossunder(macd, signal))
+        // امتیازدهی به فروش
+        if (CheckMacdCrossunder(macd, signalLine))
             sellScore += 0.3m;
-
         if (CheckVolumeSpike(candles1h))
             sellScore += 0.2m;
-
         if (CheckEmaCrossunder(ema20, ema50))
             sellScore += 0.2m;
-
         if (trendDown)
             sellScore += 0.2m;
-
         if (rsi[^1] < 50 && rsi[^1] > 30)
             sellScore += 0.1m;
+        if (DivergenceDetector.HasBearishDivergence(candles1h, rsi))
+            sellScore += 0.2m;
 
+        // تعیین اکشن نهایی
         string action = "Hold";
         string reason = "نمره کافی برای خرید یا فروش صادر نشد.";
-        decimal stopLoss = 0, takeProfit = 0;
+        decimal stopLoss = 0;
+        decimal takeProfit1 = 0, takeProfit2 = 0, takeProfit3 = 0;
         decimal entry = candles1h[^1].Close;
+
         Log.Information($"The Buying Rate Of {symbol} is : {buyScore}");
         Log.Information($"The Selling Rate Of {symbol} is : {sellScore}");
-        if (buyScore >= 0.4m && buyScore >= sellScore)
+
+        if (buyScore >= 0.6m && buyScore >= sellScore)
         {
             action = "Buy";
-            reason = $"امتیاز تحلیل خرید {buyScore:F2} (بیش از 0.8) - سیگنال خرید صادر شد.";
-            stopLoss = entry - (entry * slPercentBuy / 100);
-            takeProfit = entry + (entry * tpPercentBuy / 100);
+            reason = $"امتیاز تحلیل خرید {buyScore:F2} (بیش از 0.7) - سیگنال خرید صادر شد.";
+
+            stopLoss = entry - (entry * slPercentBuy / 100m);
+
+            takeProfit1 = entry + (entry * slPercentBuy / 100m);  // 1 برابر SL
+            takeProfit2 = entry + (entry * (slPercentBuy * 2) / 100m); // 2 برابر SL
+            takeProfit3 = entry + (entry * (slPercentBuy * 3) / 100m); // 3 برابر SL
         }
-        else if (sellScore >= 0.4m && sellScore > buyScore)
+        else if (sellScore >= 0.6m && sellScore > buyScore)
         {
             action = "Sell";
-            reason = $"امتیاز تحلیل فروش {sellScore:F2} (بیش از 0.8) - سیگنال فروش صادر شد.";
-            stopLoss = entry + (entry * slPercentSell / 100);
-            takeProfit = entry - (entry * tpPercentSell / 100);
+            reason = $"امتیاز تحلیل فروش {sellScore:F2} (بیش از 0.7) - سیگنال فروش صادر شد.";
+
+            stopLoss = entry + (entry * slPercentSell / 100m);
+
+            takeProfit1 = entry - (entry * slPercentSell / 100m);  // 1 برابر SL
+            takeProfit2 = entry - (entry * (slPercentSell * 2) / 100m); // 2 برابر SL
+            takeProfit3 = entry - (entry * (slPercentSell * 3) / 100m); // 3 برابر SL
         }
 
         return new TradeSignal
@@ -726,11 +805,16 @@ public class SignalGenerator
             Reason = reason,
             Price = entry,
             StopLoss = stopLoss,
-            TakeProfit = takeProfit
+            TakeProfit1 = takeProfit1,
+            TakeProfit2 = takeProfit2,
+            TakeProfit3 = takeProfit3
         };
     }
 
-   
+
+
+
+
     private bool CheckMacdCrossover(List<decimal> macd, List<decimal> signal)
     {
         return macd[^2] < signal[^2] && macd[^1] > signal[^1];
@@ -835,6 +919,13 @@ public static class TrendConfirmationAnalyzer
         var ema50 = IndicatorCalculator.EMA(higherTimeframeCandles, 50);
         return ema20[^1] < ema50[^1];
     }
+
+    public static bool IsTrendingMarket(List<Candle> candles, int period = 14, decimal threshold = 25m)
+    {
+        var adx = IndicatorCalculator.ADX(candles, period);
+        return adx.Last() >= threshold;
+    }
+
 }
 
 
@@ -857,8 +948,202 @@ public class TradeSignal
     public string Action { get; set; }
     public string Reason { get; set; }
     public decimal Price { get; set; }
-
     public decimal StopLoss { get; set; }
-    public decimal TakeProfit { get; set; }
+    public decimal TakeProfit1 { get; set; }
+    public decimal TakeProfit2 { get; set; }
+    public decimal TakeProfit3 { get; set; }
 }
 
+
+public class Backtester
+{
+    private readonly MarketAnalyzer _analyzer;
+    private readonly SignalGenerator _signalGenerator;
+
+    private readonly Program _program;
+    public Backtester()
+    {
+        _analyzer = new MarketAnalyzer();
+        _signalGenerator = new SignalGenerator();
+        _program = new Program();
+    }
+
+    public async Task RunBacktestAsync(List<string> symbols, int months = 6)
+    {
+        int totalTrades = 0;
+        int winningTrades = 0;
+        int buyTrades = 0;
+        int sellTrades = 0;
+        decimal initialEquity = 1000; 
+        decimal equity = initialEquity;
+        decimal peakEquity = equity;
+        decimal maxDrawdown = 0;
+
+
+        decimal leverage = 20; 
+        decimal riskPerTradePercent = 1.0m; 
+        decimal feePercentPerTrade = 0.08m; 
+
+        foreach (var symbol in symbols)
+        {
+            try
+            {
+                var fromDate = DateTime.UtcNow.AddMonths(-months);
+                var candles = await _analyzer.GetCandlesAsync(symbol, fromDate);
+
+                for (int i = 50; i < candles.Count - 1; i++)
+                {
+                    var recentCandles = candles.Take(i + 1).ToList();
+                    var signal = _signalGenerator.GenerateSignal(symbol, recentCandles, recentCandles,
+                        slPercentBuy: 1.5m, tpPercentBuy: 3.0m,
+                        slPercentSell: 1.5m, tpPercentSell: 3.0m);
+
+                    if (signal.Action == "Buy" || signal.Action == "Sell")
+                    {
+                        totalTrades++;
+                        if (signal.Action == "Buy") buyTrades++;
+                        if (signal.Action == "Sell") sellTrades++;
+
+                        var entry = signal.Price;
+                        var sl = signal.StopLoss;
+                        var tp = signal.TakeProfit3;
+
+                        // outcome اولیه
+                        var rawOutcome = SimulateTradeWithTrailingStop(candles.Skip(i + 1).Take(10).ToList(), entry, sl, tp, signal.Action);
+
+                        // محاسبه ریسک روی موجودی فعلی
+                        decimal riskAmount = equity * (riskPerTradePercent / 100m);
+
+                        // سود یا ضرر واقعی با اهرم
+                        decimal leveragedOutcome = (rawOutcome / entry) * leverage * riskAmount;
+
+                        // محاسبه فی کل (ورود + خروج)
+                        decimal totalFeePercent = feePercentPerTrade * 2;
+                        decimal feeAmount = leveragedOutcome >= 0
+                            ? leveragedOutcome * (totalFeePercent / 100m)
+                            : Math.Abs(leveragedOutcome) * (totalFeePercent / 100m);
+
+                        leveragedOutcome -= feeAmount; // کم کردن فی
+
+                        if (leveragedOutcome > 0)
+                            winningTrades++;
+
+                        equity += leveragedOutcome;
+
+                        if (equity > peakEquity)
+                            peakEquity = equity;
+
+                        var drawdown = (peakEquity - equity) / peakEquity;
+                        if (drawdown > maxDrawdown)
+                            maxDrawdown = drawdown;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"خطا در تحلیل {symbol}: {ex.Message}");
+            }
+        }
+
+        decimal winRate = totalTrades > 0 ? (decimal)winningTrades / totalTrades * 100 : 0;
+
+
+
+        Console.WriteLine($"\n✅ نتایج بک‌تست:");
+        Console.WriteLine($"🔹 تعداد کل معاملات: {totalTrades}");
+        Console.WriteLine($"🔹 تعداد معاملات خرید (Buy): {buyTrades}");
+        Console.WriteLine($"🔹 تعداد معاملات فروش (Sell): {sellTrades}");
+        Console.WriteLine($"🔹 درصد موفقیت: {winRate:F2}%");
+        Console.WriteLine($"🔹 سرمایه نهایی: {equity:F2} $");
+        Console.WriteLine($"🔹 سود خالص: {(equity - initialEquity):F2} $"); // ✅ اصلاح شد
+        Console.WriteLine($"🔹 Drawdown ماکزیمم: {(maxDrawdown * 100):F2}%");
+
+        //----------------------------------------------------------------------//
+
+        var summaryMessage = $"✅ نتایج بک‌تست:\n" +
+                      $"🔹 تعداد کل معاملات: {totalTrades}\n" +
+                      $"🔹 تعداد معاملات خرید (Buy): {buyTrades}\n" +
+                      $"🔹 تعداد معاملات فروش (Sell): {sellTrades}\n" +
+                      $"🔹 درصد موفقیت: {winRate:F2}%\n" +
+                      $"🔹 سرمایه نهایی: {equity:F2} $\n" +
+                      $"🔹 سود خالص: {(equity - initialEquity):F2} $\n" + // ✅ اصلاح شد
+                      $"🔹 Drawdown ماکزیمم: {(maxDrawdown * 100):F2}%";
+
+        var token =  _program.GetToken();
+        List<long> ids = new List<long> { 5200052562, 101705025, 7532880262 };
+
+
+        var _telegramSender = new TelegramSender("7783393338:AAH7bsTePXfJvb7TJh7S2pr9hmLxaoxSIo4",ids);
+        await _telegramSender.SendSignalMessage(summaryMessage);
+
+    }
+
+    public decimal SimulateTradeWithTrailingStop(List<Candle> futureCandles, decimal entryPrice, decimal stopLoss, decimal takeProfit, string action)
+    {
+        decimal highestPrice = entryPrice;
+        decimal lowestPrice = entryPrice;
+        decimal trailingPercent = 1.0m; // ✅ درصد فاصله تریلینگ استاپ از سقف (مثلا 1%)
+
+        foreach (var candle in futureCandles)
+        {
+            if (action == "Buy")
+            {
+                if (candle.High > highestPrice)
+                    highestPrice = candle.High;
+
+                decimal trailingStop = highestPrice * (1 - trailingPercent / 100m);
+
+                if (candle.Low <= trailingStop)
+                {
+                    // برخورد با تریلینگ استاپ در خرید
+                    return trailingStop - entryPrice;
+                }
+
+                if (candle.High >= takeProfit)
+                {
+                    // تارگت خورد
+                    return takeProfit - entryPrice;
+                }
+
+                if (candle.Low <= stopLoss)
+                {
+                    // استاپ خورد
+                    return stopLoss - entryPrice;
+                }
+            }
+            else if (action == "Sell")
+            {
+                if (candle.Low < lowestPrice)
+                    lowestPrice = candle.Low;
+
+                decimal trailingStop = lowestPrice * (1 + trailingPercent / 100m);
+
+                if (candle.High >= trailingStop)
+                {
+                    // برخورد با تریلینگ استاپ در فروش
+                    return entryPrice - trailingStop;
+                }
+
+                if (candle.Low <= takeProfit)
+                {
+                    // تارگت خورد
+                    return entryPrice - takeProfit;
+                }
+
+                if (candle.High >= stopLoss)
+                {
+                    // استاپ خورد
+                    return entryPrice - stopLoss;
+                }
+            }
+        }
+
+        // اگر هیچکدوم نخورده بود، معامله بسته نشده
+        return 0;
+    }
+
+
+
+
+
+}
